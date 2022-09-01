@@ -1,71 +1,53 @@
 const express = require('express');
 const app = express();
 const router = express.Router();
+const Persons = require('./models/contact');
 
 app.use(express.json());
 
-let persons = [
-  {
-    id: 1,
-    name: 'Arto Hellas',
-    number: '040-123456',
-  },
-  {
-    id: 2,
-    name: 'Ada Lovelace',
-    number: '39-44-5323523',
-  },
-  {
-    id: 3,
-    name: 'Dan Abramov',
-    number: '12-43-234345',
-  },
-  {
-    id: 4,
-    name: 'Mary Poppendieck',
-    number: '39-23-6423122',
-  },
-];
-
 router.use((req, res, next) => {
   console.log('Accessed date: ', new Date().toLocaleString());
+  console.log('Method :', req.method);
+  console.log('Status Code :', res.statusCode);
   next();
 });
 
 router.get('/api/persons', (request, response) => {
-  response.json(persons);
+  Persons.find({}).then((person) => {
+    response.json(person);
+  });
 });
 
 router.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id);
-  const person = persons.find((person) => person.id === id);
-
-  if (person) {
-    response.json(person);
-  } else {
-    response.status(404).end();
-  }
+  Persons.findById(request.params.id)
+    .then((note) => {
+      if (note) {
+        response.json(note);
+      } else {
+        response.status(404).end();
+      }
+    })
+    .catch((error) => {
+      console.log(error.message);
+      response.status(400).send({ error: 'malformatted id' });
+    });
 });
 
-router.get('/info', (request, response) => {
-  const body = `<p>Phonebook has info for ${
-    persons.length
-  } people</p><p>${new Date()}</p>`;
+router.get('/info', async (request, response) => {
+  const phoneBookLength = await Persons.find({}).then(
+    (person) => person.length
+  );
+  const body = `<p>Phonebook has info for ${phoneBookLength} people</p><p>${new Date()}</p>`;
+
   response.send(body);
 });
 
-const generateId = () => {
-  return Math.floor(Math.random() * 1000);
-};
-
-const findDuplicates = (entries) => {
-  return persons.filter((person) =>
-    person.name.toLowerCase().includes(entries.toLowerCase())
-  );
-};
-
-router.post('/api/persons/', (request, response) => {
+router.post('/api/persons', (request, response) => {
   const body = request.body;
+
+  if (body === undefined) {
+    return response.status(400).json({ error: 'content missing' });
+  }
 
   if (!body.name) {
     return response.status(400).json({
@@ -75,33 +57,23 @@ router.post('/api/persons/', (request, response) => {
     return response.status(400).json({
       error: 'please enter contact number',
     });
-  } else if (findDuplicates(body.name).length > 0) {
-    return response.status(400).json({
-      error: 'name must be unique',
-    });
   }
 
-  const person = {
-    id: body.id,
+  const person = new Persons({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  persons = persons.concat(person);
-
-  response.json(persons);
+  person.save().then((savedPerson) => {
+    response.json(savedPerson);
+  });
 });
 
 router.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id);
-  const personIndex = persons.findIndex((person) => person.id === id);
-
-  if (persons[personIndex]) {
-    persons.splice(personIndex, 1);
-    response.send(`Deleted`);
-  } else {
-    response.status(404).end();
-  }
+  const id = request.params.id;
+  return Persons.findOneAndDelete({ _id: id }).then((person) =>
+    response.json(person)
+  );
 });
 
 module.exports = router;
