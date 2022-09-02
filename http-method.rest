@@ -2,7 +2,7 @@ GET http://localhost:3001/api/persons
 ###
 GET http://localhost:3001/info
 ###
-GET http://localhost:3001/api/persons/630cee2434814645dad465cd
+GET http://localhost:3001/api/persons/631100fc89d3c609f5ef7f87
 ###
 DELETE http://localhost:3001/api/persons/630cee2434814645dad465cd
 ###
@@ -10,6 +10,15 @@ POST http://localhost:3001/api/persons
 Content-Type: application/json
 
 {   
-    "name": "Testing POST METHOD 2",
+    "name": "Te",
     "number": "08512712571"
+}
+
+###
+PUT http://localhost:3001/api/persons/631100fc89d3c609f5ef7f87
+Content-Type: application/json
+
+{
+    "name": "Debora"
+    "number": "0888-6969"
 }

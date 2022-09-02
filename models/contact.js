@@ -2,10 +2,10 @@ require('dotenv').config();
 
 const mongoose = require('mongoose');
 
-const url = `mongodb+srv://phonebook-admin:${process.env.MONGODB_DBS_PASSWORD}@cluster0.o8ijugp.mongodb.net/phonebook?retryWrites=true&w=majority`;
+const url = process.env.MONGODB_URI;
 
 mongoose
-  .connect(url)
+  .connect(url, { useNewUrlParser: true })
   .then((result) => {
     console.log(`connected to ${result.connection.name} in MongoDB`);
   })
@@ -14,8 +14,16 @@ mongoose
   });
 
 const contactSchema = new mongoose.Schema({
-  name: String,
-  number: String,
+  name: {
+    type: String,
+    minLength: 3,
+    required: true,
+  },
+  number: {
+    type: String,
+    minLength: 8,
+    required: true,
+  },
 });
 
 contactSchema.set('toJSON', {

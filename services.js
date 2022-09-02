@@ -5,20 +5,15 @@ const Persons = require('./models/contact');
 
 app.use(express.json());
 
-router.use((req, res, next) => {
-  console.log('Accessed date: ', new Date().toLocaleString());
-  console.log('Method :', req.method);
-  console.log('Status Code :', res.statusCode);
-  next();
-});
-
 router.get('/api/persons', (request, response) => {
+  const body = request.body;
+
   Persons.find({}).then((person) => {
     response.json(person);
   });
 });
 
-router.get('/api/persons/:id', (request, response) => {
+router.get('/api/persons/:id', (request, response, next) => {
   Persons.findById(request.params.id)
     .then((note) => {
       if (note) {
@@ -27,10 +22,7 @@ router.get('/api/persons/:id', (request, response) => {
         response.status(404).end();
       }
     })
-    .catch((error) => {
-      console.log(error.message);
-      response.status(400).send({ error: 'malformatted id' });
-    });
+    .catch((error) => next(error));
 });
 
 router.get('/info', async (request, response) => {
@@ -42,7 +34,7 @@ router.get('/info', async (request, response) => {
   response.send(body);
 });
 
-router.post('/api/persons', (request, response) => {
+router.post('/api/persons', (request, response, next) => {
   const body = request.body;
 
   if (body === undefined) {
@@ -64,16 +56,34 @@ router.post('/api/persons', (request, response) => {
     number: body.number,
   });
 
-  person.save().then((savedPerson) => {
-    response.json(savedPerson);
-  });
+  person
+    .save()
+    .then((savedPerson) => {
+      response.json(savedPerson);
+    })
+    .catch((error) => next(error));
 });
 
-router.delete('/api/persons/:id', (request, response) => {
-  const id = request.params.id;
-  return Persons.findOneAndDelete({ _id: id }).then((person) =>
-    response.json(person)
-  );
+router.put('/api/persons/:id', (request, response, next) => {
+  const { name, number } = request.body;
+
+  return Persons.findByIdAndUpdate(
+    request.params.id,
+    { name, number },
+    {
+      new: true,
+      runValidators: true,
+      context: 'query',
+    }
+  )
+    .then((updatedPerson) => response.json(updatedPerson))
+    .catch((error) => next(error));
+});
+
+router.delete('/api/persons/:id', (request, response, next) => {
+  return Persons.findByIdAndRemove(request.params.id)
+    .then((person) => response.status(204).end())
+    .catch((error) => next(error));
 });
 
 module.exports = router;
