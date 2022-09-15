@@ -6,12 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "build:ui": "rm -rf build && cd ../../part2/phonebook && npm run build && cp -r build ../../part3/phonebook-backend",
     "test": "node mongo.js",
-    "deploy": "git add . && git commit -m deployment && git push heroku master",
-    "deploy:full": "npm run build:ui && git add . && git commit -m update ui && git push && npm run deploy",
-    "launch": "heroku open",
-    "logs:prod": "heroku logs --tail"
+    "launch": "heroku open"
   },
   "author": "Dionisius Darrel",
   "license": "ISC",
